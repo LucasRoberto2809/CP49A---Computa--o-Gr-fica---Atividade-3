@@ -1,6 +1,6 @@
 # Classes
-
-class Objeto():
+# Limitações: obj que definem multiplas faces com "g" (ex: magnolia)
+class Objeto:
     def __init__(self, arquivo):
         self.arquivo = arquivo
         self.nome = ""
@@ -24,47 +24,55 @@ class Objeto():
         x = float(linha[1])
         y = float(linha[2])
         z = float(linha[3])
-        self.vertices.append(Vertice(x,y,z))
+        vertex = Vertice(x, y, z)
+        vertex.id = int(len(self.vertices))+1  # ID
+        self.vertices.append(vertex)
     
     def _anotaFace(self, linha):
         lista = [] # lista de vertices
         for v in linha[1:]:
             indice = int(v.split('/')[0])
             lista.append(indice-1) # -1 pois vertices começam em 1
-        self.faces.append(Face(lista))
+        face = Face(lista)
+        face.id = int(len(self.faces))+1  # ID
+        self.faces.append(face)
+        #self.faces.append(Face(lista))
 
 class Vertice:
     def __init__(self, x, y, z):
+        self.id = 0
         self.x = x
         self.y = y
         self.z = z
         self.arestaIncidente = None
 
-class Face():
+class Face:
     def __init__(self, indiceVertices):
+        self.id = 0
         self.indiceVertices = indiceVertices
         self.aresta = None
 
-class Aresta():
+class Aresta:
     def __init__(self):
+        self.id = 0
         self.verticeInicial = None
         self.verticeFinal = None
         self.faceEsquerda = None
         self.faceDireita = None
-        self.faceEsquerdaAnterior = None
-        self.faceEsquerdaPosterior = None
-        self.faceDireitaAnterior = None
-        self.faceDireitaPosterior = None
+        self.arestaFaceEsquerdaAnterior = None
+        self.arestaFaceEsquerdaPosterior = None
+        self.arestaFaceDireitaAnterior = None
+        self.arestaFaceDireitaPosterior = None
 
 class ConstrutorObj:
-    def __init__(self, parser):
+    def __init__(self, parser: Objeto):
         self.parser = parser
         self.vertices = parser.vertices
         self.faces = parser.faces
         self.arestas = []
         self.mapaArestas = {} # usado como auxiliar em funções
     
-    def constroi(self):
+    def constroi(self) -> None:
         for face in self.faces:
             vertices = face.indiceVertices
             n = len(vertices)
@@ -79,6 +87,7 @@ class ConstrutorObj:
                     aresta = self.mapaArestas[chaveAresta]
                 else:
                     aresta = Aresta()
+                    aresta.id = int(len(self.arestas))+1 # ID
                     aresta.verticeInicial = self.vertices[v1]
                     aresta.verticeFinal = self.vertices[v2]
                     self.mapaArestas[chaveAresta] = aresta
@@ -90,17 +99,17 @@ class ConstrutorObj:
                     aresta.faceDireita = face
                 arestasFace.append(aresta)
             # conecta arestas da face atual
-            for i in range(len(vertices)):
+            for i in range(n):
                 arestaAtual = arestasFace[i]
                 arestaAnterior = arestasFace[(i-1)%n]
                 arestaPosterior = arestasFace[(i+1)%n]
                 # confere se a face esta a esquerda ou a direita
                 if arestaAtual.faceEsquerda == face:
-                    arestaAtual.faceEsquerdaAnterior = arestaAnterior
-                    arestaAtual.faceEsquerdaPosterior = arestaPosterior
+                    arestaAtual.arestaFaceEsquerdaAnterior = arestaAnterior
+                    arestaAtual.arestaFaceEsquerdaPosterior = arestaPosterior
                 else:
-                    arestaAtual.faceDireitaAnterior = arestaAnterior
-                    arestaAtual.faceDireitaPosterior = arestaPosterior   
+                    arestaAtual.arestaFaceDireitaAnterior = arestaAnterior
+                    arestaAtual.arestaFaceDireitaPosterior = arestaPosterior   
                 # define a aresta incidente do vertice (se necessario)
                 if self.vertices[vertices[i]].arestaIncidente is None:
                     self.vertices[vertices[i]].arestaIncidente = arestaAtual
